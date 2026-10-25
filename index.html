@@ -37,11 +37,7 @@
         </div>
 
         <div class="flex items-center space-x-4">
-            <!-- Configuration Modal Trigger -->
-            <button onclick="openConfigModal()" class="flex items-center space-x-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors border border-slate-200">
-                <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
-                <span>API & Webhook Config</span>
-            </button>
+            <!-- Configuration Modal Trigger (REMOVED) -->
             <button onclick="openBackendGuideModal()" class="flex items-center space-x-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-colors border border-blue-200">
                 <i data-lucide="cpu" class="w-4 h-4 text-blue-600"></i>
                 <span>n8n Workflow Guide</span>
@@ -352,6 +348,10 @@
 
     <!-- Application Logic Script -->
     <script>
+        // Hardcoded System Configurations (Hidden from UI)
+        const HARDCODED_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXqwt';
+        const HARDCODED_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
+
         // Default Master Stock List (based on your n8n workflow guardrails)
         const DEFAULT_STOCKS = [
             { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -370,8 +370,8 @@
         // State variables
         let allStocks = [];
         let selectedStocks = [];
-        let fmpApiKey = '';
-        let webhookUrl = '';
+        let fmpApiKey = HARDCODED_FMP_KEY;
+        let webhookUrl = HARDCODED_WEBHOOK_URL;
         let activeStockTicker = null;
         let priceChart = null;
         let stockCache = {};
@@ -392,18 +392,13 @@
             const savedSelected = localStorage.getItem('ai_agent_selected');
             selectedStocks = savedSelected ? JSON.parse(savedSelected) : ['AAPL', 'NVDA', 'MSFT'];
 
-            fmpApiKey = localStorage.getItem('ai_agent_fmp_key') || '';
-            webhookUrl = localStorage.getItem('ai_agent_webhook_url') || '';
-
-            document.getElementById('config-fmp-key').value = fmpApiKey;
-            document.getElementById('config-webhook-url').value = webhookUrl;
+            fmpApiKey = HARDCODED_FMP_KEY;
+            webhookUrl = HARDCODED_WEBHOOK_URL;
         }
 
         function saveLocalStorage() {
             localStorage.setItem('ai_agent_stocks', JSON.stringify(allStocks));
             localStorage.setItem('ai_agent_selected', JSON.stringify(selectedStocks));
-            localStorage.setItem('ai_agent_fmp_key', fmpApiKey);
-            localStorage.setItem('ai_agent_webhook_url', webhookUrl);
         }
 
         function resetDefaultStocks() {
@@ -734,15 +729,8 @@
             runBtn.disabled = true;
 
             try {
-                if (!webhookUrl) {
-                    // Simulate AI response if webhook URL is not configured yet
-                    await new Promise(r => setTimeout(r, 2500));
-                    renderAiMarkdown(`### Equity Research Director Agent Analysis: ${activeStockTicker}\n\n**Overall Recommendation:** <span class="text-emerald-600 font-bold">BUY</span>\n\n**1. Fundamental Analysis:**\n- **Current Ratio:** 1.85, indicating strong short-term liquidity and ability to cover upcoming liabilities.\n- **Debt-to-Capital:** 0.34, showing conservative leverage relative to industry peers.\n- **Cash Flow:** Healthy operational cash flow supported by robust EBITDA growth over the trailing 3 fiscal years.\n\n**2. Technical Analysis:**\n- Moving averages confirm an ongoing bullish continuation pattern.\n- RSI sits at 58.4, well clear of overbought thresholds, suggesting sustained momentum.\n\n**3. Final Verdict:**\nStrong fundamentals paired with stable technical momentum make ${activeStockTicker} an attractive addition to the portfolio.`);
-                    return;
-                }
-
                 // Call real n8n webhook
-                const res = await fetch(webhookUrl, {
+                const res = await fetch(HARDCODED_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ stock_ticker: activeStockTicker, chatInput: `Please analyze ${activeStockTicker}` })
@@ -754,7 +742,7 @@
 
             } catch (err) {
                 console.error('Webhook execution error:', err);
-                renderAiMarkdown(`### Error connecting to n8n Webhook\n\nUnable to reach endpoint at <code class="text-xs bg-slate-200 px-1 py-0.5 rounded">${webhookUrl}</code>. Please verify your n8n workflow is active and CORS is permitted.\n\n*Error details: ${err.message}*`);
+                renderAiMarkdown(`### Error connecting to n8n Webhook\n\nUnable to reach endpoint. Please verify your n8n workflow is active and listening.\n\n*Error details: ${err.message}*`);
             } finally {
                 loader.classList.remove('flex');
                 loader.classList.add('hidden');

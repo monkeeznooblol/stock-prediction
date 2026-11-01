@@ -251,12 +251,6 @@
         const DEFAULT_FMP_KEY = 'FdXqVyGXjlsgHbIPF7ptAxq4cr9fKwzh';
         const DEFAULT_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
 
-        const MOCK_BASE_PRICES = {
-            'AAPL': 224.23, 'TSLA': 218.50, 'AMZN': 186.40, 'MSFT': 428.15,
-            'NVDA': 138.25, 'GOOGL': 165.70, 'META': 578.90, 'NFLX': 702.10,
-            'JPM': 222.40, 'AMD': 156.30, 'SPY': 575.40
-        };
-
         const DEFAULT_STOCKS = [
             { symbol: 'AAPL', name: 'Apple Inc.' },
             { symbol: 'TSLA', name: 'Tesla Inc.' },
@@ -292,7 +286,7 @@
             allStocks = savedStocks ? JSON.parse(savedStocks) : DEFAULT_STOCKS;
 
             const savedSelected = localStorage.getItem('ai_agent_selected');
-            selectedStocks = savedSelected ? JSON.parse(savedSelected) : ['AAPL', 'NVDA', 'MSFT'];
+            selectedStocks = savedSelected ? JSON.parse(savedSelected) : [];
 
             const savedFmpKey = localStorage.getItem('ai_agent_fmp_key');
             if (savedFmpKey) fmpApiKey = savedFmpKey;
@@ -310,7 +304,7 @@
 
         function resetDefaultStocks() {
             allStocks = DEFAULT_STOCKS;
-            selectedStocks = ['AAPL', 'NVDA', 'MSFT'];
+            selectedStocks = [];
             saveLocalStorage();
             renderStockList();
             loadStockData(true);
@@ -524,24 +518,12 @@
                 }
 
                 if (!fetchedSuccess) {
-                    const basePrice = MOCK_BASE_PRICES[symbol] || 150.00;
-                    const changePercent = ((Math.random() * 4) - 1.8).toFixed(2);
-                    stockCache[symbol] = {
-                        price: `$${basePrice.toFixed(2)}`,
-                        change: (basePrice * (changePercent / 100)).toFixed(2),
-                        pChange: changePercent,
-                        mktcap: formatMarketCap(basePrice * 1200000000),
-                        high52: (basePrice * 1.15).toFixed(2),
-                        low52: (basePrice * 0.85).toFixed(2),
-                        exchange: 'NASDAQ',
-                        isClosed: false,
-                        tradeDate: ''
-                    };
+                    delete stockCache[symbol];
                 }
 
                 if (stockCache[symbol]) {
-                    stockCache[symbol].currentRatio = currentRatioVal || getCalculatedCurrentRatio(symbol);
-                    stockCache[symbol].debtCapital = debtCapitalVal || getCalculatedDebtCapital(symbol);
+                    stockCache[symbol].currentRatio = currentRatioVal || 'N/A';
+                    stockCache[symbol].debtCapital = debtCapitalVal || 'N/A';
                 }
             }
 
@@ -551,15 +533,11 @@
         }
 
         function getCalculatedCurrentRatio(symbol) {
-            const sum = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-            const val = (1.2 + (sum % 14) / 10).toFixed(2);
-            return `${val} (${val >= 1.7 ? 'Healthy' : 'Fair'})`;
+            return 'N/A';
         }
 
         function getCalculatedDebtCapital(symbol) {
-            const sum = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-            const val = (0.18 + (sum % 22) / 100).toFixed(2);
-            return `${val} (${val < 0.32 ? 'Low Risk' : 'Moderate'})`;
+            return 'N/A';
         }
 
         function formatMarketCap(mktCap) {
@@ -592,9 +570,8 @@
             changeEl.innerText = `${pChange}% (${data.isClosed ? 'last trading day' : 'today'})`;
             changeEl.className = `text-xs font-semibold ${Number(pChange) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
-            // Real dynamic assignment to indicator DOM elements
-            document.getElementById('ind-current-ratio').innerText = data.currentRatio || getCalculatedCurrentRatio(symbol);
-            document.getElementById('ind-debt-capital').innerText = data.debtCapital || getCalculatedDebtCapital(symbol);
+            document.getElementById('ind-current-ratio').innerText = data.currentRatio || 'N/A';
+            document.getElementById('ind-debt-capital').innerText = data.debtCapital || 'N/A';
             document.getElementById('ind-high-low').innerText = (data.low52 && data.high52) ? `$${data.low52} / $${data.high52}` : '-- / --';
             document.getElementById('ind-mktcap').innerText = data.mktcap || '---';
         }
@@ -650,16 +627,6 @@
                         }
                     }
                 } catch (e) { console.warn('Historical chart fetch warning:', e); }
-            }
-
-            if (labels.length === 0) {
-                const basePrice = MOCK_BASE_PRICES[symbol] || 180;
-                for (let i = 30; i >= 0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - i);
-                    labels.push(d.toISOString().split('T')[0]);
-                    prices.push(Number((basePrice + (Math.sin(i / 3) * 5)).toFixed(2)));
-                }
             }
 
             if (priceChart) priceChart.destroy();

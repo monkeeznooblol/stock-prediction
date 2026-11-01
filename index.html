@@ -253,7 +253,7 @@
                 <div>
                     <label class="block font-medium text-slate-700 mb-1">Financial Modeling Prep (FMP) API Key</label>
                     <input type="text" id="config-fmp-key" placeholder="Enter FMP API key..." class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-[11px] text-slate-400 mt-1">If invalid or unauthorized, mock pricing data is automatically generated.</p>
+                    <p class="text-[11px] text-slate-400 mt-1">If invalid or market closed, historical EOD prices or fallback data are automatically generated.</p>
                 </div>
                 <div>
                     <label class="block font-medium text-slate-700 mb-1">n8n Workflow Webhook URL</label>
@@ -350,10 +350,10 @@
 
     <!-- Application Logic Script -->
     <script>
-        const DEFAULT_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXqwt';
+        const DEFAULT_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXq';
         const DEFAULT_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
 
-        // Base Prices for Mock Fallback (when API key returns an error)
+        // Base Prices for Mock Fallback
         const MOCK_BASE_PRICES = {
             'AAPL': 224.23,
             'TSLA': 218.50,
@@ -393,10 +393,11 @@
         let stockCache = {};
 
         // Initialization on Load
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             loadLocalStorage();
             renderStockList();
-            renderStockCards(false);
+            renderStockCardsUI();
+            await loadStockData(false);
             lucide.createIcons();
         });
 
@@ -427,7 +428,7 @@
             selectedStocks = ['AAPL', 'NVDA', 'MSFT'];
             saveLocalStorage();
             renderStockList();
-            renderStockCards(true);
+            loadStockData(true);
             showToast('Reset to default stock list', 'info');
         }
 
@@ -500,11 +501,11 @@
             }
             saveLocalStorage();
             renderStockList();
-            renderStockCards(false);
+            loadStockData(false);
         }
 
-        // Render Main Cards Grid
-        async function renderStockCards(userInitiated = false) {
+        // Render Main Cards Grid UI from cached data
+        function renderStockCardsUI() {
             const container = document.getElementById('stock-cards-container');
             const emptyState = document.getElementById('empty-cards-state');
             const countBadge = document.getElementById('selected-count-badge');
@@ -522,7 +523,7 @@
             emptyState.classList.add('hidden');
 
             container.innerHTML = selectedStocks.map(symbol => {
-                const data = stockCache[symbol] || { price: '---', change: '--', pChange: '--', mktcap: '---' };
+                const data = stockCache[symbol] || { price: '---', change: '--', pChange: '--', mktcap: '---', tradeDate: '' };
                 const isPositive = !data.pChange || String(data.pChange).startsWith('+') || Number(data.pChange) >= 0;
                 const changeColor = isPositive ? 'text-emerald-600 bg-emerald-50' : 'text-rose-600 bg-rose-50';
                 const sign = isPositive && Number(data.pChange) > 0 ? '+' : '';
@@ -531,7 +532,10 @@
                     <div onclick="selectStockForDetail('${symbol}')" class="bg-white border border-slate-200 hover:border-blue-400 rounded-xl p-5 shadow-sm transition-all cursor-pointer flex flex-col justify-between group">
                         <div class="flex justify-between items-start">
                             <div>
-                                <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">${symbol}</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-600 rounded">${symbol}</span>
+                                    ${data.tradeDate ? `<span class="text-[10px] text-slate-400 font-medium">${data.tradeDate}</span>` : ''}
+                                </div>
                                 <h4 class="text-base font-bold text-slate-900 mt-1 group-hover:text-blue-600 transition-colors">${getCompanyName(symbol)}</h4>
                             </div>
                             <button onclick="event.stopPropagation(); toggleStockSelection('${symbol}');" class="text-slate-300 hover:text-slate-500 p-1">
@@ -540,7 +544,7 @@
                         </div>
                         <div class="mt-4 flex justify-between items-end">
                             <div>
-                                <div class="text-xs text-slate-400">Live Price</div>
+                                <div class="text-xs text-slate-400">${data.isClosed ? 'Last Closing Price' : 'Market Price'}</div>
                                 <div class="text-xl font-bold text-slate-900">${data.price}</div>
                             </div>
                             <div class="text-right">
@@ -554,7 +558,6 @@
             }).join('');
 
             lucide.createIcons();
-            await loadStockData(userInitiated);
         }
 
         function getCompanyName(symbol) {
@@ -562,33 +565,71 @@
             return found ? found.name : symbol;
         }
 
-        // FMP API Data Fetching with Stable Endpoint & Fallback Mock Data
+        // FMP API Data Fetching with Live Quote + Historical EOD Fallback (Weekend/Closed Markets)
         async function loadStockData(userInitiated = false) {
             for (const symbol of selectedStocks) {
                 let fetchedSuccess = false;
                 if (fmpApiKey) {
                     try {
+                        // 1. Attempt standard live quote endpoint
                         const res = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${symbol}&apikey=${fmpApiKey}`);
                         if (res.ok) {
                             const json = await res.json();
                             if (json && json.length > 0) {
                                 const q = json[0];
                                 const priceVal = q.price ?? q.close ?? 0;
-                                const changeVal = q.change ?? 0;
                                 const pChangeVal = q.changesPercentage ?? q.changePercent ?? 0;
+                                // If quote provides a non-zero price and percentage change, use live quote
+                                if (priceVal > 0 && pChangeVal !== 0) {
+                                    stockCache[symbol] = {
+                                        price: `$${Number(priceVal).toFixed(2)}`,
+                                        change: Number(q.change ?? 0).toFixed(2),
+                                        pChange: Number(pChangeVal).toFixed(2),
+                                        mktcap: formatMarketCap(q.marketCap),
+                                        volume: q.volume || 0,
+                                        high52: q.yearHigh ? Number(q.yearHigh).toFixed(2) : '---',
+                                        low52: q.yearLow ? Number(q.yearLow).toFixed(2) : '---',
+                                        exchange: q.exchange || 'NASDAQ',
+                                        isClosed: false,
+                                        tradeDate: '',
+                                        raw: q
+                                    };
+                                    fetchedSuccess = true;
+                                }
+                            }
+                        }
 
-                                stockCache[symbol] = {
-                                    price: `$${Number(priceVal).toFixed(2)}`,
-                                    change: Number(changeVal).toFixed(2),
-                                    pChange: Number(pChangeVal).toFixed(2),
-                                    mktcap: formatMarketCap(q.marketCap),
-                                    volume: q.volume || 0,
-                                    high52: q.yearHigh ? Number(q.yearHigh).toFixed(2) : '---',
-                                    low52: q.yearLow ? Number(q.yearLow).toFixed(2) : '---',
-                                    exchange: q.exchange || 'NASDAQ',
-                                    raw: q
-                                };
-                                fetchedSuccess = true;
+                        // 2. Fallback for closed markets/weekends or 0% live change: Fetch latest 2 EOD candles (e.g. Friday vs Thursday)
+                        if (!fetchedSuccess) {
+                            const histRes = await fetch(`https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&apikey=${fmpApiKey}`);
+                            if (histRes.ok) {
+                                const histJson = await histRes.json();
+                                const histArray = Array.isArray(histJson) ? histJson : histJson.historical;
+                                if (histArray && histArray.length >= 2) {
+                                    const latest = histArray[0]; // Most recent completed trading day (e.g. Friday)
+                                    const prev = histArray[1];   // Prior trading day (e.g. Thursday)
+                                    
+                                    const closePrice = latest.close ?? latest.price ?? 0;
+                                    const prevClose = prev.close ?? prev.price ?? closePrice;
+                                    
+                                    const priceChange = closePrice - prevClose;
+                                    const pChange = prevClose > 0 ? ((priceChange / prevClose) * 100) : 0;
+
+                                    stockCache[symbol] = {
+                                        price: `$${Number(closePrice).toFixed(2)}`,
+                                        change: Number(priceChange).toFixed(2),
+                                        pChange: Number(pChange).toFixed(2),
+                                        mktcap: formatMarketCap(closePrice * 1200000000),
+                                        volume: latest.volume || 0,
+                                        high52: '---',
+                                        low52: '---',
+                                        exchange: 'NASDAQ',
+                                        isClosed: true,
+                                        tradeDate: latest.date || '',
+                                        raw: latest
+                                    };
+                                    fetchedSuccess = true;
+                                }
                             }
                         }
                     } catch (err) {
@@ -596,7 +637,7 @@
                     }
                 }
 
-                // Fallback Mock Generator if API fails or key is un-permissioned
+                // 3. Mock Fallback Generator if API key is invalid or network fails
                 if (!fetchedSuccess) {
                     const basePrice = MOCK_BASE_PRICES[symbol] || 150.00;
                     const changePercent = ((Math.random() * 4) - 1.8).toFixed(2);
@@ -610,12 +651,16 @@
                         high52: (basePrice * 1.15).toFixed(2),
                         low52: (basePrice * 0.85).toFixed(2),
                         exchange: 'NASDAQ',
+                        isClosed: false,
+                        tradeDate: '',
                         raw: { price: basePrice }
                     };
                 }
             }
 
-            // Update active stock details if drawer is open
+            // Update UI with new cached data
+            renderStockCardsUI();
+
             if (activeStockTicker) {
                 updateDetailSectionContent(activeStockTicker);
             }
@@ -653,7 +698,8 @@
             
             const changeEl = document.getElementById('detail-change');
             const pChange = data.pChange || '0.00';
-            changeEl.innerText = `${pChange}% today`;
+            const labelText = data.isClosed ? 'last trading day' : 'today';
+            changeEl.innerText = `${pChange}% (${labelText})`;
             changeEl.className = `text-xs font-semibold ${Number(pChange) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
             document.getElementById('ind-current-ratio').innerText = '1.85 (Healthy)';
@@ -691,7 +737,7 @@
             }
         }
 
-        // Load Historical Chart
+        // Load Historical Chart using the FMP historical-price-eod/full Endpoint
         async function loadHistoricalChart(symbol) {
             const ctx = document.getElementById('stockPriceChart').getContext('2d');
             let labels = [];
@@ -699,13 +745,14 @@
 
             if (fmpApiKey) {
                 try {
-                    const res = await fetch(`https://financialmodelingprep.com/stable/historical-price-full?symbol=${symbol}&apikey=${fmpApiKey}`);
+                    const res = await fetch(`https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&apikey=${fmpApiKey}`);
                     if (res.ok) {
                         const json = await res.json();
-                        if (json && json.historical) {
-                            const hist = json.historical.slice(0, 30).reverse();
+                        const histArray = Array.isArray(json) ? json : json.historical;
+                        if (histArray && histArray.length > 0) {
+                            const hist = histArray.slice(0, 30).reverse();
                             labels = hist.map(h => h.date);
-                            prices = hist.map(h => h.close);
+                            prices = hist.map(h => h.close ?? h.price);
                         }
                     }
                 } catch (e) {
@@ -846,7 +893,7 @@
             selectedStocks.push(ticker);
             saveLocalStorage();
             renderStockList();
-            renderStockCards(false);
+            loadStockData(false);
             closeAddStockModal();
             showToast(`Added ${ticker} successfully`);
         }

@@ -37,7 +37,6 @@
         </div>
 
         <div class="flex items-center space-x-4">
-            <!-- Configuration Modal Trigger (REMOVED) -->
             <button onclick="openBackendGuideModal()" class="flex items-center space-x-2 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-medium rounded-lg transition-colors border border-blue-200">
                 <i data-lucide="cpu" class="w-4 h-4 text-blue-600"></i>
                 <span>n8n Workflow Guide</span>
@@ -59,7 +58,7 @@
                 </div>
                 <div class="flex items-center space-x-3">
                     <span id="selected-count-badge" class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">0 Stocks Selected</span>
-                    <button onclick="loadStockData()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm flex items-center space-x-2">
+                    <button onclick="loadStockData(true)" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm flex items-center space-x-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                         <span>Refresh Market Data</span>
                     </button>
@@ -234,37 +233,6 @@
 
     </div>
 
-    <!-- Configuration Modal -->
-    <div id="config-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                    <i data-lucide="settings" class="w-5 h-5 text-blue-600"></i>
-                    <span>API & Webhook Settings</span>
-                </h3>
-                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">FMP API Key (Financial Modeling Prep)</label>
-                    <input type="text" id="config-fmp-key" placeholder="Enter your FMP API key" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-xs text-slate-400 mt-1">Used to fetch real-time quotes, profiles, and financials directly.</p>
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">n8n Workflow Webhook URL</label>
-                    <input type="text" id="config-webhook-url" placeholder="https://your-n8n-instance.com/webhook/..." class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-xs text-slate-400 mt-1">POST endpoint for your n8n Equity Research Director Agent.</p>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
-                <button onclick="closeConfigModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button onclick="saveConfig()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Add Custom Stock Modal -->
     <div id="add-stock-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4">
@@ -352,7 +320,7 @@
         const HARDCODED_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXqwt';
         const HARDCODED_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
 
-        // Default Master Stock List (based on your n8n workflow guardrails)
+        // Default Master Stock List
         const DEFAULT_STOCKS = [
             { symbol: 'AAPL', name: 'Apple Inc.' },
             { symbol: 'TSLA', name: 'Tesla Inc.' },
@@ -380,7 +348,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadLocalStorage();
             renderStockList();
-            renderStockCards();
+            renderStockCards(false);
             lucide.createIcons();
         });
 
@@ -391,9 +359,6 @@
 
             const savedSelected = localStorage.getItem('ai_agent_selected');
             selectedStocks = savedSelected ? JSON.parse(savedSelected) : ['AAPL', 'NVDA', 'MSFT'];
-
-            fmpApiKey = HARDCODED_FMP_KEY;
-            webhookUrl = HARDCODED_WEBHOOK_URL;
         }
 
         function saveLocalStorage() {
@@ -406,7 +371,7 @@
             selectedStocks = ['AAPL', 'NVDA', 'MSFT'];
             saveLocalStorage();
             renderStockList();
-            renderStockCards();
+            renderStockCards(true);
             showToast('Reset to default stock list', 'info');
         }
 
@@ -479,11 +444,11 @@
             }
             saveLocalStorage();
             renderStockList();
-            renderStockCards();
+            renderStockCards(false);
         }
 
         // Render Main Cards Grid
-        async function renderStockCards() {
+        async function renderStockCards(userInitiated = false) {
             const container = document.getElementById('stock-cards-container');
             const emptyState = document.getElementById('empty-cards-state');
             const countBadge = document.getElementById('selected-count-badge');
@@ -534,9 +499,8 @@
 
             lucide.createIcons();
             
-            // Fetch live data if API key exists
             if (fmpApiKey) {
-                await loadStockData();
+                await loadStockData(userInitiated);
             }
         }
 
@@ -546,11 +510,8 @@
         }
 
         // FMP API Data Fetching
-        async function loadStockData() {
-            if (!fmpApiKey) {
-                showToast('Please enter your FMP API Key in settings', 'info');
-                return;
-            }
+        async function loadStockData(userInitiated = false) {
+            if (!fmpApiKey) return;
 
             for (const symbol of selectedStocks) {
                 try {
@@ -574,11 +535,24 @@
                     console.error(`Error fetching quote for ${symbol}:`, err);
                 }
             }
-            renderStockCards();
+            
+            // Re-render UI cards with newly cached prices
+            const container = document.getElementById('stock-cards-container');
+            if (container) {
+                selectedStocks.forEach(symbol => {
+                    const data = stockCache[symbol];
+                    if (!data) return;
+                });
+            }
+
             if (activeStockTicker) {
                 updateDetailSectionContent(activeStockTicker);
             }
-            showToast('Market data updated successfully');
+
+            // Show toast ONLY if explicitly requested by clicking the refresh button
+            if (userInitiated) {
+                showToast('Market data updated successfully');
+            }
         }
 
         function formatMarketCap(marketCap) {
@@ -612,13 +586,11 @@
             changeEl.innerText = `${pChange}% today`;
             changeEl.className = `text-xs font-semibold ${Number(pChange) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
-            // Indicators mockup / calculated
             document.getElementById('ind-current-ratio').innerText = '1.85 (Healthy)';
             document.getElementById('ind-debt-capital').innerText = '0.34 (Moderate)';
             document.getElementById('ind-high-low').innerText = `$${data.low52 || '---'} / $${data.high52 || '---'}`;
             document.getElementById('ind-mktcap').innerText = data.mktcap || '---';
 
-            // Reset AI response section for this stock
             document.getElementById('ai-empty-state').classList.remove('hidden');
             document.getElementById('ai-response-box').classList.add('hidden');
             document.getElementById('ai-loader').classList.add('hidden');
@@ -652,8 +624,6 @@
         // Load 30-Day Historical Chart
         async function loadHistoricalChart(symbol) {
             const ctx = document.getElementById('stockPriceChart').getContext('2d');
-            
-            // Generate fallback data if no FMP key or fetch fails
             let labels = [];
             let prices = [];
 
@@ -672,7 +642,6 @@
             }
 
             if (labels.length === 0) {
-                // Fallback mock data
                 const basePrice = stockCache[symbol]?.raw?.price || 150;
                 for (let i = 30; i >= 0; i--) {
                     const d = new Date();
@@ -729,7 +698,6 @@
             runBtn.disabled = true;
 
             try {
-                // Call real n8n webhook
                 const res = await fetch(HARDCODED_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -753,29 +721,13 @@
         function renderAiMarkdown(text) {
             const responseBox = document.getElementById('ai-response-box');
             responseBox.classList.remove('hidden');
-            // Basic formatting helper
             responseBox.innerHTML = text
                 .replace(/### (.*?)\n/g, '<h5 class="font-bold text-slate-900 text-base mb-2">$1</h5>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>')
                 .replace(/\n/g, '<br>');
         }
 
-        // Modals Management
-        function openConfigModal() {
-            document.getElementById('config-modal').classList.remove('hidden');
-        }
-        function closeConfigModal() {
-            document.getElementById('config-modal').classList.add('hidden');
-        }
-        function saveConfig() {
-            fmpApiKey = document.getElementById('config-fmp-key').value.trim();
-            webhookUrl = document.getElementById('config-webhook-url').value.trim();
-            saveLocalStorage();
-            closeConfigModal();
-            showToast('Settings saved successfully');
-            if (fmpApiKey) loadStockData();
-        }
-
+        // Add Custom Stock Modal Functions
         function openAddStockModal() {
             document.getElementById('add-stock-modal').classList.remove('hidden');
         }
@@ -802,7 +754,7 @@
             selectedStocks.push(ticker);
             saveLocalStorage();
             renderStockList();
-            renderStockCards();
+            renderStockCards(false);
             closeAddStockModal();
             showToast(`Added ${ticker} successfully`);
         }

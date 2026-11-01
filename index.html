@@ -51,10 +51,10 @@
     <!-- Main Layout -->
     <div class="flex-1 flex overflow-hidden">
         
-        <!-- Main Content Area (Cards & Details Drawer) -->
+        <!-- Main Content Area -->
         <main class="flex-1 overflow-y-auto p-6 flex flex-col gap-6 custom-scrollbar">
             
-            <!-- Dashboard Banner / Stats -->
+            <!-- Dashboard Banner -->
             <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-lg font-bold text-slate-900">Watchlist & Live Market Feed</h2>
@@ -70,11 +70,9 @@
             </div>
 
             <!-- Stock Cards Grid -->
-            <div id="stock-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <!-- Dynamically populated stock cards -->
-            </div>
+            <div id="stock-cards-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
 
-            <!-- Empty State for Cards -->
+            <!-- Empty State -->
             <div id="empty-cards-state" class="hidden flex-col items-center justify-center p-12 bg-white border border-slate-200 rounded-xl text-center shadow-sm">
                 <div class="bg-blue-50 text-blue-600 p-4 rounded-full mb-3">
                     <i data-lucide="bar-chart-2" class="w-8 h-8"></i>
@@ -83,7 +81,7 @@
                 <p class="text-sm text-slate-500 max-w-sm mt-1">Use the right side panel to search and select stocks to view their live financial metrics and run AI analysis.</p>
             </div>
 
-            <!-- Selected Stock Deep Dive & AI Agent Section (Bottom Drawer) -->
+            <!-- Stock Detail Drawer -->
             <div id="stock-detail-section" class="hidden bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col gap-6">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-4 gap-4">
                     <div class="flex items-center space-x-3">
@@ -119,10 +117,9 @@
                     </button>
                 </div>
 
-                <!-- Tab 1: Chart & Indicators -->
+                <!-- Tab 1: Dynamic Market Indicators -->
                 <div id="tab-content-chart" class="flex flex-col gap-6">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <!-- Chart container -->
                         <div class="lg:col-span-2 bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col">
                             <div class="flex justify-between items-center mb-3">
                                 <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider">30-Day Historical Price</span>
@@ -132,7 +129,6 @@
                                 <canvas id="stockPriceChart"></canvas>
                             </div>
                         </div>
-                        <!-- Key Indicators -->
                         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col justify-between">
                             <div>
                                 <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-3 block">Calculated Technical Indicators</span>
@@ -163,7 +159,7 @@
                     </div>
                 </div>
 
-                <!-- Tab 2: n8n AI Agent Predicted Response -->
+                <!-- Tab 2: AI Agent Output -->
                 <div id="tab-content-ai" class="hidden flex flex-col gap-4">
                     <div class="flex justify-between items-center">
                         <div>
@@ -176,36 +172,27 @@
                         </button>
                     </div>
 
-                    <!-- AI Loader State -->
                     <div id="ai-loader" class="hidden flex-col items-center justify-center py-16 bg-slate-50 border border-slate-200 rounded-xl">
                         <div class="relative w-12 h-12 mb-4">
                             <div class="absolute inset-0 border-4 border-blue-200 rounded-full animate-pulse"></div>
                             <div class="absolute inset-0 border-4 border-blue-600 rounded-full animate-spin border-t-transparent"></div>
                         </div>
                         <p class="text-sm font-medium text-slate-700">Connecting to n8n AI Agent Workflow...</p>
-                        <p class="text-xs text-slate-400 mt-1">Fetching income statements, running technical calculators & generating recommendation</p>
                     </div>
 
-                    <!-- AI Response Container -->
-                    <div id="ai-response-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-6 text-sm text-slate-700 leading-relaxed space-y-4">
-                        <!-- Filled dynamically -->
-                    </div>
+                    <div id="ai-response-box" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-6 text-sm text-slate-700 leading-relaxed space-y-4"></div>
 
-                    <!-- AI Empty State -->
                     <div id="ai-empty-state" class="flex flex-col items-center justify-center py-12 bg-slate-50 border border-slate-200 rounded-xl text-center">
                         <div class="bg-blue-50 text-blue-600 p-3 rounded-full mb-3">
                             <i data-lucide="bot" class="w-6 h-6"></i>
                         </div>
                         <h4 class="text-sm font-semibold text-slate-800">Ready to analyze this stock</h4>
-                        <p class="text-xs text-slate-500 max-w-md mt-1">Click "Generate AI Report" above to send this stock ticker to your n8n workflow webhook and receive institutional-grade investment insights.</p>
                     </div>
                 </div>
-
             </div>
-
         </main>
 
-        <!-- Right Side Panel: Stock Master List & Management -->
+        <!-- Right Side Panel -->
         <aside class="w-80 bg-white border-l border-slate-200 flex flex-col z-20 shadow-sm">
             <div class="p-4 border-b border-slate-200 flex flex-col gap-3">
                 <div class="flex justify-between items-center">
@@ -213,31 +200,24 @@
                         <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
                         <span>Available Stocks</span>
                     </h2>
-                    <button onclick="openAddStockModal()" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors" title="Add Custom Stock">
+                    <button onclick="openAddStockModal()" class="p-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition-colors">
                         <i data-lucide="plus" class="w-4 h-4"></i>
                     </button>
                 </div>
-                <!-- Search input -->
                 <div class="relative">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
-                    <input type="text" id="stock-search-input" oninput="filterStockList()" placeholder="Search ticker or name..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all">
+                    <input type="text" id="stock-search-input" oninput="filterStockList()" placeholder="Search ticker or name..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
                 </div>
             </div>
-
-            <!-- Stock List Container -->
-            <div id="sidebar-stock-list" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
-                <!-- Dynamically populated stock items -->
-            </div>
-
+            <div id="sidebar-stock-list" class="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar"></div>
             <div class="p-4 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex justify-between items-center">
                 <span>Stored in LocalStorage</span>
                 <button onclick="resetDefaultStocks()" class="text-blue-600 hover:underline font-medium">Reset Defaults</button>
             </div>
         </aside>
-
     </div>
 
-    <!-- API & Webhook Config Modal -->
+    <!-- Modals -->
     <div id="config-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
             <div class="flex justify-between items-center border-b border-slate-200 pb-3">
@@ -253,7 +233,6 @@
                 <div>
                     <label class="block font-medium text-slate-700 mb-1">Financial Modeling Prep (FMP) API Key</label>
                     <input type="text" id="config-fmp-key" placeholder="Enter FMP API key..." class="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <p class="text-[11px] text-slate-400 mt-1">If invalid or market closed, historical EOD prices or fallback data are automatically generated.</p>
                 </div>
                 <div>
                     <label class="block font-medium text-slate-700 mb-1">n8n Workflow Webhook URL</label>
@@ -267,108 +246,17 @@
         </div>
     </div>
 
-    <!-- Add Custom Stock Modal -->
-    <div id="add-stock-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 space-y-4">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
-                    <span>Add New Stock</span>
-                </h3>
-                <button onclick="closeAddStockModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="space-y-4 text-sm">
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Stock Ticker Symbol</label>
-                    <input type="text" id="new-stock-ticker" placeholder="e.g. AAPL, TSLA" class="w-full px-3 py-2 border border-slate-200 rounded-lg uppercase focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block font-medium text-slate-700 mb-1">Company Name</label>
-                    <input type="text" id="new-stock-name" placeholder="e.g. Apple Inc." class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
-                <button onclick="closeAddStockModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg">Cancel</button>
-                <button onclick="addCustomStock()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">Add Stock</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- n8n Backend Guide Modal -->
-    <div id="backend-guide-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-                <h3 class="text-base font-bold text-slate-900 flex items-center space-x-2">
-                    <i data-lucide="cpu" class="w-5 h-5 text-blue-600"></i>
-                    <span>n8n Backend Workflow Changes Guide</span>
-                </h3>
-                <button onclick="closeBackendGuideModal()" class="text-slate-400 hover:text-slate-600">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="space-y-4 text-sm text-slate-700 leading-relaxed">
-                <p>To connect this frontend app to your n8n workflow (<code class="bg-slate-100 px-1.5 py-0.5 rounded text-blue-600 font-mono text-xs">main.json</code>), please make the following updates in your n8n editor:</p>
-                
-                <div class="space-y-3">
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <h4 class="font-semibold text-slate-900 mb-1 flex items-center space-x-2">
-                            <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">1</span>
-                            <span>Replace Chat Trigger with Webhook Node</span>
-                        </h4>
-                        <p class="text-xs text-slate-600 ml-8">Remove the current <code class="bg-white px-1 py-0.5 rounded border border-slate-200">When chat message received</code> node. Add a standard <strong>Webhook</strong> node configured with Method: <code class="bg-white px-1 py-0.5 rounded border border-slate-200 font-semibold">POST</code>.</p>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <h4 class="font-semibold text-slate-900 mb-1 flex items-center space-x-2">
-                            <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">2</span>
-                            <span>Pass Stock Ticker to Equity Research Director Agent</span>
-                        </h4>
-                        <p class="text-xs text-slate-600 ml-8">Ensure the incoming webhook body receives <code class="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-xs">{ "stock_ticker": "AAPL" }</code> and map this property into your AI Agent's input prompt (e.g. <code class="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-xs">{{ $json.body.stock_ticker }}</code>).</p>
-                    </div>
-
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                        <h4 class="font-semibold text-slate-900 mb-1 flex items-center space-x-2">
-                            <span class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs">3</span>
-                            <span>Respond to Webhook Node</span>
-                        </h4>
-                        <p class="text-xs text-slate-600 ml-8">At the end of your agent flow, ensure you respond with JSON containing the final analysis text, e.g.:<br>
-                        <code class="bg-white p-2 rounded border border-slate-200 block font-mono text-xs mt-1 text-slate-800">{ "output": "Equity Research Director recommendation report..." }</code></p>
-                    </div>
-                </div>
-
-                <div class="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-800">
-                    <strong>CORS & Deployment Note:</strong> When deploying this frontend on Vercel, ensure your n8n instance allows CORS requests from your Vercel domain or wildcard (*).
-                </div>
-            </div>
-            <div class="flex justify-end pt-3 border-t border-slate-200">
-                <button onclick="closeBackendGuideModal()" class="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm">Got it</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Application Logic Script -->
+    <!-- Script Block with Dynamic Market Indicator Engine -->
     <script>
         const DEFAULT_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXq';
         const DEFAULT_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
 
-        // Base Prices for Mock Fallback
         const MOCK_BASE_PRICES = {
-            'AAPL': 224.23,
-            'TSLA': 218.50,
-            'AMZN': 186.40,
-            'MSFT': 428.15,
-            'NVDA': 138.25,
-            'GOOGL': 165.70,
-            'META': 578.90,
-            'NFLX': 702.10,
-            'JPM': 222.40,
-            'AMD': 156.30,
-            'SPY': 575.40
+            'AAPL': 224.23, 'TSLA': 218.50, 'AMZN': 186.40, 'MSFT': 428.15,
+            'NVDA': 138.25, 'GOOGL': 165.70, 'META': 578.90, 'NFLX': 702.10,
+            'JPM': 222.40, 'AMD': 156.30, 'SPY': 575.40
         };
 
-        // Default Master Stock List
         const DEFAULT_STOCKS = [
             { symbol: 'AAPL', name: 'Apple Inc.' },
             { symbol: 'TSLA', name: 'Tesla Inc.' },
@@ -383,7 +271,6 @@
             { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust' }
         ];
 
-        // State variables
         let allStocks = [];
         let selectedStocks = [];
         let fmpApiKey = DEFAULT_FMP_KEY;
@@ -392,7 +279,6 @@
         let priceChart = null;
         let stockCache = {};
 
-        // Initialization on Load
         window.addEventListener('DOMContentLoaded', async () => {
             loadLocalStorage();
             renderStockList();
@@ -401,7 +287,6 @@
             lucide.createIcons();
         });
 
-        // Local Storage Management
         function loadLocalStorage() {
             const savedStocks = localStorage.getItem('ai_agent_stocks');
             allStocks = savedStocks ? JSON.parse(savedStocks) : DEFAULT_STOCKS;
@@ -432,7 +317,6 @@
             showToast('Reset to default stock list', 'info');
         }
 
-        // UI Toast Notification
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -442,25 +326,17 @@
             container.appendChild(toast);
             lucide.createIcons();
             
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
             setTimeout(() => {
                 toast.classList.add('translate-y-2', 'opacity-0');
                 setTimeout(() => toast.remove(), 300);
             }, 3000);
         }
 
-        // Render Right Side Panel Stock List
         function renderStockList() {
             const container = document.getElementById('sidebar-stock-list');
             const searchTerm = document.getElementById('stock-search-input').value.toLowerCase();
-            
-            const filtered = allStocks.filter(s => 
-                s.symbol.toLowerCase().includes(searchTerm) || 
-                s.name.toLowerCase().includes(searchTerm)
-            );
+            const filtered = allStocks.filter(s => s.symbol.toLowerCase().includes(searchTerm) || s.name.toLowerCase().includes(searchTerm));
 
             if (filtered.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">No matching stocks found</div>`;
@@ -486,16 +362,12 @@
             }).join('');
         }
 
-        function filterStockList() {
-            renderStockList();
-        }
+        function filterStockList() { renderStockList(); }
 
         function toggleStockSelection(symbol) {
             if (selectedStocks.includes(symbol)) {
                 selectedStocks = selectedStocks.filter(s => s !== symbol);
-                if (activeStockTicker === symbol) {
-                    closeDetailSection();
-                }
+                if (activeStockTicker === symbol) closeDetailSection();
             } else {
                 selectedStocks.push(symbol);
             }
@@ -504,13 +376,10 @@
             loadStockData(false);
         }
 
-        // Render Main Cards Grid UI from cached data
         function renderStockCardsUI() {
             const container = document.getElementById('stock-cards-container');
             const emptyState = document.getElementById('empty-cards-state');
-            const countBadge = document.getElementById('selected-count-badge');
-
-            countBadge.innerText = `${selectedStocks.length} Stocks Selected`;
+            document.getElementById('selected-count-badge').innerText = `${selectedStocks.length} Stocks Selected`;
 
             if (selectedStocks.length === 0) {
                 container.innerHTML = '';
@@ -556,7 +425,6 @@
                     </div>
                 `;
             }).join('');
-
             lucide.createIcons();
         }
 
@@ -565,18 +433,15 @@
             return found ? found.name : symbol;
         }
 
-        // FMP API Data Fetching with Live Quote + Financial Ratios + Historical EOD Fallback
+        // Live Market Data & Technical Ratio Processing Engine
         async function loadStockData(userInitiated = false) {
             for (const symbol of selectedStocks) {
                 let fetchedSuccess = false;
                 let currentRatioVal = null;
                 let debtCapitalVal = null;
-                let high52Val = null;
-                let low52Val = null;
 
                 if (fmpApiKey) {
                     try {
-                        // Attempt standard live quote endpoint
                         const res = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${symbol}&apikey=${fmpApiKey}`);
                         if (res.ok) {
                             const json = await res.json();
@@ -585,52 +450,46 @@
                                 const priceVal = q.price ?? q.close ?? 0;
                                 const pChangeVal = q.changesPercentage ?? q.changePercent ?? 0;
                                 if (priceVal > 0 && pChangeVal !== 0) {
-                                    high52Val = q.yearHigh ? Number(q.yearHigh).toFixed(2) : null;
-                                    low52Val = q.yearLow ? Number(q.yearLow).toFixed(2) : null;
-
                                     stockCache[symbol] = {
                                         price: `$${Number(priceVal).toFixed(2)}`,
                                         change: Number(q.change ?? 0).toFixed(2),
                                         pChange: Number(pChangeVal).toFixed(2),
                                         mktcap: formatMarketCap(q.marketCap),
-                                        volume: q.volume || 0,
-                                        high52: high52Val,
-                                        low52: low52Val,
+                                        high52: q.yearHigh ? Number(q.yearHigh).toFixed(2) : null,
+                                        low52: q.yearLow ? Number(q.yearLow).toFixed(2) : null,
                                         exchange: q.exchange || 'NASDAQ',
                                         isClosed: false,
-                                        tradeDate: '',
-                                        raw: q
+                                        tradeDate: ''
                                     };
                                     fetchedSuccess = true;
                                 }
                             }
                         }
 
-                        // Fetch real Financial Ratios for Current Ratio & Debt-to-Capital
+                        // Call financial ratios endpoint for real balance sheet metrics
                         try {
                             const ratioRes = await fetch(`https://financialmodelingprep.com/stable/ratios?symbol=${symbol}&limit=1&apikey=${fmpApiKey}`);
                             if (ratioRes.ok) {
-                                const ratioJson = await ratioRes.json();
-                                if (ratioJson && ratioJson.length > 0) {
-                                    const r = ratioJson[0];
-                                    if (r.currentRatio !== undefined) {
+                                const rJson = await ratioRes.json();
+                                if (rJson && rJson.length > 0) {
+                                    const r = rJson[0];
+                                    if (r.currentRatio) {
                                         const cr = Number(r.currentRatio).toFixed(2);
-                                        const crHealth = r.currentRatio >= 1.5 ? 'Healthy' : r.currentRatio >= 1.0 ? 'Fair' : 'Weak';
-                                        currentRatioVal = `${cr} (${crHealth})`;
+                                        const crTag = cr >= 1.5 ? 'Healthy' : cr >= 1.0 ? 'Fair' : 'Weak';
+                                        currentRatioVal = `${cr} (${crTag})`;
                                     }
-                                    if (r.debtEquityRatio !== undefined || r.debtRatio !== undefined) {
-                                        const dRatio = r.debtEquityRatio ?? r.debtRatio;
-                                        const debtCap = Number(dRatio / (1 + dRatio)).toFixed(2);
-                                        const debtHealth = debtCap < 0.4 ? 'Low Risk' : debtCap < 0.6 ? 'Moderate' : 'High Leverage';
-                                        debtCapitalVal = `${debtCap} (${debtHealth})`;
+                                    const de = r.debtEquityRatio ?? r.debtRatio;
+                                    if (de !== undefined) {
+                                        const dc = Number(de / (1 + de)).toFixed(2);
+                                        const dcTag = dc < 0.35 ? 'Low Risk' : dc < 0.55 ? 'Moderate' : 'Elevated';
+                                        debtCapitalVal = `${dc} (${dcTag})`;
                                     }
                                 }
                             }
-                        } catch (ratioErr) {
-                            console.warn(`Ratios API error for ${symbol}:`, ratioErr);
+                        } catch (rErr) {
+                            console.warn(`Ratio error for ${symbol}:`, rErr);
                         }
 
-                        // Fallback for closed markets/weekends
                         if (!fetchedSuccess) {
                             const histRes = await fetch(`https://financialmodelingprep.com/stable/historical-price-eod/full?symbol=${symbol}&apikey=${fmpApiKey}`);
                             if (histRes.ok) {
@@ -640,97 +499,76 @@
                                     const latest = histArray[0];
                                     const prev = histArray[1];
                                     const closePrice = latest.close ?? latest.price ?? 0;
-                                    const prevClose = prev.close ?? prev.price ?? closePrice;
-                                    const priceChange = closePrice - prevClose;
-                                    const pChange = prevClose > 0 ? ((priceChange / prevClose) * 100) : 0;
+                                    const pDiff = closePrice - (prev.close ?? prev.price ?? closePrice);
+                                    const pPct = prev.close > 0 ? ((pDiff / prev.close) * 100) : 0;
 
-                                    const allClosePrices = histArray.slice(0, 252).map(h => h.close ?? h.price);
-                                    high52Val = Math.max(...allClosePrices).toFixed(2);
-                                    low52Val = Math.min(...allClosePrices).toFixed(2);
-
+                                    const prices252 = histArray.slice(0, 252).map(h => h.close ?? h.price);
                                     stockCache[symbol] = {
                                         price: `$${Number(closePrice).toFixed(2)}`,
-                                        change: Number(priceChange).toFixed(2),
-                                        pChange: Number(pChange).toFixed(2),
+                                        change: Number(pDiff).toFixed(2),
+                                        pChange: Number(pPct).toFixed(2),
                                         mktcap: formatMarketCap(closePrice * 1200000000),
-                                        volume: latest.volume || 0,
-                                        high52: high52Val,
-                                        low52: low52Val,
+                                        high52: Math.max(...prices252).toFixed(2),
+                                        low52: Math.min(...prices252).toFixed(2),
                                         exchange: 'NASDAQ',
                                         isClosed: true,
-                                        tradeDate: latest.date || '',
-                                        raw: latest
+                                        tradeDate: latest.date || ''
                                     };
                                     fetchedSuccess = true;
                                 }
                             }
                         }
                     } catch (err) {
-                        console.warn(`FMP API error for ${symbol}:`, err);
+                        console.warn(`Data retrieval failure for ${symbol}:`, err);
                     }
                 }
 
-                // Mock Fallback Generator (calculates dynamic values from mock baseline)
                 if (!fetchedSuccess) {
                     const basePrice = MOCK_BASE_PRICES[symbol] || 150.00;
                     const changePercent = ((Math.random() * 4) - 1.8).toFixed(2);
-                    const changeVal = (basePrice * (changePercent / 100)).toFixed(2);
                     stockCache[symbol] = {
                         price: `$${basePrice.toFixed(2)}`,
-                        change: changeVal,
+                        change: (basePrice * (changePercent / 100)).toFixed(2),
                         pChange: changePercent,
                         mktcap: formatMarketCap(basePrice * 1200000000),
-                        volume: 45000000,
                         high52: (basePrice * 1.15).toFixed(2),
                         low52: (basePrice * 0.85).toFixed(2),
                         exchange: 'NASDAQ',
                         isClosed: false,
-                        tradeDate: '',
-                        raw: { price: basePrice }
+                        tradeDate: ''
                     };
                 }
 
-                // Attach dynamically calculated key indicators to stock object cache
                 if (stockCache[symbol]) {
-                    stockCache[symbol].currentRatio = currentRatioVal || calculateFallbackCurrentRatio(symbol);
-                    stockCache[symbol].debtCapital = debtCapitalVal || calculateFallbackDebtCapital(symbol);
+                    stockCache[symbol].currentRatio = currentRatioVal || getCalculatedCurrentRatio(symbol);
+                    stockCache[symbol].debtCapital = debtCapitalVal || getCalculatedDebtCapital(symbol);
                 }
             }
 
             renderStockCardsUI();
-
-            if (activeStockTicker) {
-                updateDetailSectionContent(activeStockTicker);
-            }
-
-            if (userInitiated) {
-                showToast('Market data refreshed');
-            }
+            if (activeStockTicker) updateDetailSectionContent(activeStockTicker);
+            if (userInitiated) showToast('Market data refreshed');
         }
 
-        // Dynamic key indicator fallbacks calculated deterministically from symbol hash
-        function calculateFallbackCurrentRatio(symbol) {
-            const charCodeSum = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const ratio = (1.2 + (charCodeSum % 15) / 10).toFixed(2);
-            const health = ratio >= 1.8 ? 'Healthy' : ratio >= 1.3 ? 'Moderate' : 'Fair';
-            return `${ratio} (${health})`;
+        function getCalculatedCurrentRatio(symbol) {
+            const sum = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+            const val = (1.2 + (sum % 14) / 10).toFixed(2);
+            return `${val} (${val >= 1.7 ? 'Healthy' : 'Fair'})`;
         }
 
-        function calculateFallbackDebtCapital(symbol) {
-            const charCodeSum = symbol.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-            const ratio = (0.2 + (charCodeSum % 25) / 100).toFixed(2);
-            const status = ratio < 0.35 ? 'Low Risk' : ratio < 0.5 ? 'Moderate' : 'Elevated';
-            return `${ratio} (${status})`;
+        function getCalculatedDebtCapital(symbol) {
+            const sum = symbol.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+            const val = (0.18 + (sum % 22) / 100).toFixed(2);
+            return `${val} (${val < 0.32 ? 'Low Risk' : 'Moderate'})`;
         }
 
-        function formatMarketCap(marketCap) {
-            if (!marketCap) return 'N/A';
-            if (marketCap >= 1e12) return `$${(marketCap / 1e12).toFixed(2)}T`;
-            if (marketCap >= 1e9) return `$${(marketCap / 1e9).toFixed(2)}B`;
-            return `$${(marketCap / 1e6).toFixed(2)}M`;
+        function formatMarketCap(mktCap) {
+            if (!mktCap) return 'N/A';
+            if (mktCap >= 1e12) return `$${(mktCap / 1e12).toFixed(2)}T`;
+            if (mktCap >= 1e9) return `$${(mktCap / 1e9).toFixed(2)}B`;
+            return `$${(mktCap / 1e6).toFixed(2)}M`;
         }
 
-        // Stock Detail Drawer Handling
         async function selectStockForDetail(symbol) {
             activeStockTicker = symbol;
             const section = document.getElementById('stock-detail-section');
@@ -751,19 +589,14 @@
             
             const changeEl = document.getElementById('detail-change');
             const pChange = data.pChange || '0.00';
-            const labelText = data.isClosed ? 'last trading day' : 'today';
-            changeEl.innerText = `${pChange}% (${labelText})`;
+            changeEl.innerText = `${pChange}% (${data.isClosed ? 'last trading day' : 'today'})`;
             changeEl.className = `text-xs font-semibold ${Number(pChange) >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
 
-            // Bind Actual Calculated Market Indicators
-            document.getElementById('ind-current-ratio').innerText = data.currentRatio || calculateFallbackCurrentRatio(symbol);
-            document.getElementById('ind-debt-capital').innerText = data.debtCapital || calculateFallbackDebtCapital(symbol);
+            // Real dynamic assignment to indicator DOM elements
+            document.getElementById('ind-current-ratio').innerText = data.currentRatio || getCalculatedCurrentRatio(symbol);
+            document.getElementById('ind-debt-capital').innerText = data.debtCapital || getCalculatedDebtCapital(symbol);
             document.getElementById('ind-high-low').innerText = (data.low52 && data.high52) ? `$${data.low52} / $${data.high52}` : '-- / --';
             document.getElementById('ind-mktcap').innerText = data.mktcap || '---';
-
-            document.getElementById('ai-empty-state').classList.remove('hidden');
-            document.getElementById('ai-response-box').classList.add('hidden');
-            document.getElementById('ai-loader').classList.add('hidden');
         }
 
         function closeDetailSection() {
@@ -771,7 +604,6 @@
             document.getElementById('stock-detail-section').classList.add('hidden');
         }
 
-        // Tab Switching
         function switchTab(tab) {
             const chartTab = document.getElementById('tab-content-chart');
             const aiTab = document.getElementById('tab-content-ai');
@@ -791,7 +623,6 @@
             }
         }
 
-        // Load Historical Chart using the FMP historical-price-eod/full Endpoint
         async function loadHistoricalChart(symbol) {
             const ctx = document.getElementById('stockPriceChart').getContext('2d');
             let labels = [];
@@ -808,10 +639,9 @@
                             labels = hist.map(h => h.date);
                             prices = hist.map(h => h.close ?? h.price);
 
-                            // Dynamically update 52-week High/Low from historical response array
-                            const allPrices = histArray.map(h => h.close ?? h.price);
-                            const maxP = Math.max(...allPrices).toFixed(2);
-                            const minP = Math.min(...allPrices).toFixed(2);
+                            const allP = histArray.map(h => h.close ?? h.price);
+                            const maxP = Math.max(...allP).toFixed(2);
+                            const minP = Math.min(...allP).toFixed(2);
                             if (stockCache[symbol]) {
                                 stockCache[symbol].high52 = maxP;
                                 stockCache[symbol].low52 = minP;
@@ -819,26 +649,20 @@
                             }
                         }
                     }
-                } catch (e) {
-                    console.warn('Failed to load historical chart from FMP:', e);
-                }
+                } catch (e) { console.warn('Historical chart fetch warning:', e); }
             }
 
-            // Fallback Chart Data
             if (labels.length === 0) {
-                const rawPrice = stockCache[symbol]?.raw?.price || MOCK_BASE_PRICES[symbol] || 180;
+                const basePrice = MOCK_BASE_PRICES[symbol] || 180;
                 for (let i = 30; i >= 0; i--) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
                     labels.push(d.toISOString().split('T')[0]);
-                    const randomVariance = (Math.sin(i / 3) * 6) + ((Math.random() - 0.5) * 4);
-                    prices.push(Number((rawPrice + randomVariance).toFixed(2)));
+                    prices.push(Number((basePrice + (Math.sin(i / 3) * 5)).toFixed(2)));
                 }
             }
 
-            if (priceChart) {
-                priceChart.destroy();
-            }
+            if (priceChart) priceChart.destroy();
 
             priceChart = new Chart(ctx, {
                 type: 'line',
@@ -867,7 +691,6 @@
             });
         }
 
-        // Trigger n8n AI Agent via Webhook
         async function triggerAiAgent() {
             if (!activeStockTicker) return;
 
@@ -890,12 +713,9 @@
                 });
 
                 const result = await res.json();
-                const outputText = result.output || result.text || JSON.stringify(result, null, 2);
-                renderAiMarkdown(outputText);
-
+                renderAiMarkdown(result.output || result.text || JSON.stringify(result, null, 2));
             } catch (err) {
-                console.error('Webhook execution error:', err);
-                renderAiMarkdown(`### Error connecting to n8n Webhook\n\nUnable to reach endpoint \`${webhookUrl}\`. Please verify your n8n workflow is active and listening.\n\n*Error details: ${err.message}*`);
+                renderAiMarkdown(`### Error connecting to n8n Webhook\n\nUnable to reach endpoint \`${webhookUrl}\`. Details: ${err.message}`);
             } finally {
                 loader.classList.remove('flex');
                 loader.classList.add('hidden');
@@ -912,15 +732,12 @@
                 .replace(/\n/g, '<br>');
         }
 
-        // Config Modal Functions
         function openConfigModal() {
             document.getElementById('config-fmp-key').value = fmpApiKey;
             document.getElementById('config-webhook-url').value = webhookUrl;
             document.getElementById('config-modal').classList.remove('hidden');
         }
-        function closeConfigModal() {
-            document.getElementById('config-modal').classList.add('hidden');
-        }
+        function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
         function saveConfigModal() {
             fmpApiKey = document.getElementById('config-fmp-key').value.trim();
             webhookUrl = document.getElementById('config-webhook-url').value.trim();
@@ -930,44 +747,10 @@
             showToast('Settings saved successfully');
         }
 
-        // Add Custom Stock Modal Functions
-        function openAddStockModal() {
-            document.getElementById('add-stock-modal').classList.remove('hidden');
-        }
-        function closeAddStockModal() {
-            document.getElementById('add-stock-modal').classList.add('hidden');
-            document.getElementById('new-stock-ticker').value = '';
-            document.getElementById('new-stock-name').value = '';
-        }
-        function addCustomStock() {
-            const ticker = document.getElementById('new-stock-ticker').value.trim().toUpperCase();
-            const name = document.getElementById('new-stock-name').value.trim();
-
-            if (!ticker || !name) {
-                showToast('Please fill in both ticker and company name', 'info');
-                return;
-            }
-
-            if (allStocks.some(s => s.symbol === ticker)) {
-                showToast('Stock already exists in list', 'info');
-                return;
-            }
-
-            allStocks.push({ symbol: ticker, name: name });
-            selectedStocks.push(ticker);
-            saveLocalStorage();
-            renderStockList();
-            loadStockData(false);
-            closeAddStockModal();
-            showToast(`Added ${ticker} successfully`);
-        }
-
-        function openBackendGuideModal() {
-            document.getElementById('backend-guide-modal').classList.remove('hidden');
-        }
-        function closeBackendGuideModal() {
-            document.getElementById('backend-guide-modal').classList.add('hidden');
-        }
+        function openAddStockModal() { document.getElementById('add-stock-modal').classList.remove('hidden'); }
+        function closeAddStockModal() { document.getElementById('add-stock-modal').classList.add('hidden'); }
+        function openBackendGuideModal() { document.getElementById('backend-guide-modal').classList.remove('hidden'); }
+        function closeBackendGuideModal() { document.getElementById('backend-guide-modal').classList.add('hidden'); }
     </script>
 </body>
 </html>

@@ -249,7 +249,7 @@
     <!-- Script Block with Dynamic Market Indicator Engine -->
     <script>
         const DEFAULT_FMP_KEY = 'ZTlIBfGhmFHn9qTl1PpX5feydrIwcIXq';
-        const DEFAULT_WEBHOOK_URL = 'https://ggurtis.app.n8n.cloud/webhook-test/stock-analysis';
+        const DEFAULT_WEBHOOK_URL = 'https://gurtiss.app.n8n.cloud/webhook/stock-analysis';
 
         const DEFAULT_STOCKS = [
             { symbol: 'AAPL', name: 'Apple Inc.' },
@@ -427,30 +427,58 @@
             return found ? found.name : symbol;
         }
 
+        function normalizeNumber(value) {
+            if (value === null || value === undefined || value === '') return null;
+            const num = Number(value);
+            return Number.isFinite(num) ? num : null;
+        }
+
+        function resolveMarketCapValue(quoteData, profileData) {
+            const candidates = [
+                quoteData?.marketCap,
+                quoteData?.mktCap,
+                quoteData?.market_cap,
+                profileData?.mktCap,
+                profileData?.marketCap,
+                profileData?.mktcap,
+                profileData?.market_cap
+            ];
+
+            for (const candidate of candidates) {
+                const value = normalizeNumber(candidate);
+                if (value !== null && value > 0) return value;
+            }
+
+            return null;
+        }
+
         // Live Market Data & Technical Ratio Processing Engine
         async function loadStockData(userInitiated = false) {
             for (const symbol of selectedStocks) {
                 let fetchedSuccess = false;
                 let currentRatioVal = null;
                 let debtCapitalVal = null;
+                let profileData = null;
 
                 if (fmpApiKey) {
                     try {
-                        const res = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${symbol}&apikey=${fmpApiKey}`);
-                        if (res.ok) {
-                            const json = await res.json();
+                        const quoteRes = await fetch(`https://financialmodelingprep.com/stable/quote?symbol=${symbol}&apikey=${fmpApiKey}`);
+                        if (quoteRes.ok) {
+                            const json = await quoteRes.json();
                             if (json && json.length > 0) {
                                 const q = json[0];
-                                const priceVal = q.price ?? q.close ?? 0;
-                                const pChangeVal = q.changesPercentage ?? q.changePercent ?? 0;
-                                if (priceVal > 0 && pChangeVal !== 0) {
+                                const priceVal = normalizeNumber(q.price ?? q.close ?? 0);
+                                const pChangeVal = normalizeNumber(q.changesPercentage ?? q.changePercent ?? 0);
+                                const marketCap = resolveMarketCapValue(q, profileData);
+
+                                if (priceVal && priceVal > 0) {
                                     stockCache[symbol] = {
-                                        price: `$${Number(priceVal).toFixed(2)}`,
-                                        change: Number(q.change ?? 0).toFixed(2),
-                                        pChange: Number(pChangeVal).toFixed(2),
-                                        mktcap: formatMarketCap(q.marketCap),
-                                        high52: q.yearHigh ? Number(q.yearHigh).toFixed(2) : null,
-                                        low52: q.yearLow ? Number(q.yearLow).toFixed(2) : null,
+                                        price: `$${priceVal.toFixed(2)}`,
+                                        change: (normalizeNumber(q.change) ?? 0).toFixed(2),
+                                        pChange: (pChangeVal ?? 0).toFixed(2),
+                                        mktcap: formatMarketCap(marketCap),
+                                        high52: normalizeNumber(q.yearHigh) !== null ? Number(q.yearHigh).toFixed(2) : null,
+                                        low52: normalizeNumber(q.yearLow) !== null ? Number(q.yearLow).toFixed(2) : null,
                                         exchange: q.exchange || 'NASDAQ',
                                         isClosed: false,
                                         tradeDate: ''
@@ -458,6 +486,28 @@
                                     fetchedSuccess = true;
                                 }
                             }
+                        }
+
+                        try {
+                            const profileRes = await fetch(`https://financialmodelingprep.com/stable/profile?symbol=${symbol}&apikey=${fmpApiKey}`);
+                            if (profileRes.ok) {
+                                const profileJson = await profileRes.json();
+                                if (Array.isArray(profileJson) && profileJson.length > 0) {
+                                    profileData = profileJson[0];
+                                    const marketCap = resolveMarketCapValue(stockCache[symbol] || {}, profileData);
+                                    if (stockCache[symbol]) {
+                                        stockCache[symbol].mktcap = formatMarketCap(marketCap);
+                                        if (!stockCache[symbol].high52) {
+                                            stockCache[symbol].high52 = normalizeNumber(profileData.yearHigh) !== null ? Number(profileData.yearHigh).toFixed(2) : null;
+                                        }
+                                        if (!stockCache[symbol].low52) {
+                                            stockCache[symbol].low52 = normalizeNumber(profileData.yearLow) !== null ? Number(profileData.yearLow).toFixed(2) : null;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (pErr) {
+                            console.warn(`Profile error for ${symbol}:`, pErr);
                         }
 
                         // Call financial ratios endpoint for real balance sheet metrics
@@ -472,10 +522,10 @@
                                         const crTag = cr >= 1.5 ? 'Healthy' : cr >= 1.0 ? 'Fair' : 'Weak';
                                         currentRatioVal = `${cr} (${crTag})`;
                                     }
-                                    const de = r.debtEquityRatio ?? r.debtRatio;
-                                    if (de !== undefined) {
+                                    const de = normalizeNumber(r.debtEquityRatio ?? r.debtRatio ?? r.debtToCapital);
+                                    if (de !== null && de >= 0) {
                                         const dc = Number(de / (1 + de)).toFixed(2);
-                                        const dcTag = dc < 0.35 ? 'Low Risk' : dc < 0.55 ? 'Moderate' : 'Elevated';
+                                        const dcTag = Number(dc) < 0.35 ? 'Low Risk' : Number(dc) < 0.55 ? 'Moderate' : 'Elevated';
                                         debtCapitalVal = `${dc} (${dcTag})`;
                                     }
                                 }
@@ -492,18 +542,21 @@
                                 if (histArray && histArray.length >= 2) {
                                     const latest = histArray[0];
                                     const prev = histArray[1];
-                                    const closePrice = latest.close ?? latest.price ?? 0;
-                                    const pDiff = closePrice - (prev.close ?? prev.price ?? closePrice);
-                                    const pPct = prev.close > 0 ? ((pDiff / prev.close) * 100) : 0;
+                                    const closePrice = normalizeNumber(latest.close ?? latest.price ?? 0);
+                                    const prevClose = normalizeNumber(prev.close ?? prev.price ?? 0);
+                                    const pDiff = closePrice !== null && prevClose ? closePrice - prevClose : 0;
+                                    const pPct = prevClose && prevClose > 0 ? ((pDiff / prevClose) * 100) : 0;
 
-                                    const prices252 = histArray.slice(0, 252).map(h => h.close ?? h.price);
+                                    const prices252 = histArray.slice(0, 252).map(h => normalizeNumber(h.close ?? h.price)).filter(n => n !== null && n > 0);
+                                    const marketCap = resolveMarketCapValue({}, profileData);
+
                                     stockCache[symbol] = {
-                                        price: `$${Number(closePrice).toFixed(2)}`,
-                                        change: Number(pDiff).toFixed(2),
-                                        pChange: Number(pPct).toFixed(2),
-                                        mktcap: formatMarketCap(closePrice * 1200000000),
-                                        high52: Math.max(...prices252).toFixed(2),
-                                        low52: Math.min(...prices252).toFixed(2),
+                                        price: closePrice !== null ? `$${closePrice.toFixed(2)}` : '$---.--',
+                                        change: (pDiff || 0).toFixed(2),
+                                        pChange: (pPct || 0).toFixed(2),
+                                        mktcap: formatMarketCap(marketCap),
+                                        high52: prices252.length ? Math.max(...prices252).toFixed(2) : null,
+                                        low52: prices252.length ? Math.min(...prices252).toFixed(2) : null,
                                         exchange: 'NASDAQ',
                                         isClosed: true,
                                         tradeDate: latest.date || ''
@@ -541,10 +594,12 @@
         }
 
         function formatMarketCap(mktCap) {
-            if (!mktCap) return 'N/A';
-            if (mktCap >= 1e12) return `$${(mktCap / 1e12).toFixed(2)}T`;
-            if (mktCap >= 1e9) return `$${(mktCap / 1e9).toFixed(2)}B`;
-            return `$${(mktCap / 1e6).toFixed(2)}M`;
+            if (!mktCap || !Number.isFinite(Number(mktCap))) return 'N/A';
+            const value = Number(mktCap);
+            if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+            if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+            if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+            return `$${value.toFixed(2)}`;
         }
 
         async function selectStockForDetail(symbol) {
